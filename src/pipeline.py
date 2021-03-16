@@ -57,6 +57,12 @@ class Pipeline:
 
         # draw some pretty graphs
 
+        # get test loss and accuracy
+        self.test_loss, self.test_acc = run_model(self.model, 
+                                                    running_mode='test', 
+                                                    test_set=testset
+                                                    device=self.device)
+
 
         # export model to output_path
         torch.save(self.model.state_dict(), output_path)
@@ -65,4 +71,6 @@ class Pipeline:
 if __name__ == "__main__":
     p = Pipeline()
     p.train_general_model("data/icml_face_data.csv", "general_model.pt")
+
+    
 

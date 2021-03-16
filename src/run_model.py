@@ -39,7 +39,7 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
                 model, loss, acc = _train(model, trainloader, optimizer, device)
                 train_loss.append(loss)
                 train_acc.append(acc)
-                print("Training epoch: {}, accuracy: {}, loss: {} ".format(i, acc, loss))
+                print("Training epoch: {}, accuracy: {}, loss: {} ".format(counter, acc, loss))
 
                 optimizer.zero_grad()
                 valid_loss_val, valid_acc_val = _test(model, validloader, device)
