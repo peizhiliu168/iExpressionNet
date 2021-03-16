@@ -60,7 +60,7 @@ class Pipeline:
         # get test loss and accuracy
         self.test_loss, self.test_acc = run_model(self.model, 
                                                     running_mode='test', 
-                                                    test_set=testset
+                                                    test_set=testset,
                                                     device=self.device)
 
 

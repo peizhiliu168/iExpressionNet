@@ -110,7 +110,7 @@ def _test(model, data_loader, device=torch.device('cpu')):
 
     for batch_idx, (inputs, targets) in enumerate(data_loader):
         inputs = inputs.to(device)
-        inputs = targets.to(device)
+        targets = targets.to(device)
 
         # compute gradient and step
         inputs, targets = Variable(inputs),Variable(targets)
