@@ -39,13 +39,14 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
                 model, loss, acc = _train(model, trainloader, optimizer, device)
                 train_loss.append(loss)
                 train_acc.append(acc)
-                print("Training epoch: {}, accuracy: {}, loss: {} ".format(counter, acc, loss))
 
                 optimizer.zero_grad()
                 valid_loss_val, valid_acc_val = _test(model, validloader, device)
                 valid_loss.append(valid_loss_val)
                 valid_acc.append(valid_acc_val)
 
+                print("Training epoch: {}, train accuracy: {}, train loss: {}, valid accuracy: {}, valid loss: {} ".format(counter, acc, loss, valid_acc_val, valid_loss_val))
+                
                 if (prev_valid_loss_val - valid_loss_val) < stop_thr or counter >= n_epochs:
                     break
                 prev_valid_loss_val = valid_loss_val
