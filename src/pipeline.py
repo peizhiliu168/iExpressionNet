@@ -8,14 +8,15 @@
 ###################################################
 import torch
 
-from .models import Emotion_Classifier_Conv
+from .models import Emotion_Classifier_Conv, Emotion_Detector_Conv
 from .run_model import run_model
 from .fer13 import FER2013
 from .ingest import ingest_live_video, ingest_fer13
 
 class Pipeline:
     def __init__ (self):
-        self.model = Emotion_Classifier_Conv()
+        #self.model = Emotion_Classifier_Conv()
+        self.model = Emotion_Detector_Conv()
         
         if torch.cuda.is_available():  
             dev = "cuda:0" 
@@ -71,6 +72,7 @@ class Pipeline:
 if __name__ == "__main__":
     p = Pipeline()
     p.train_general_model("data/icml_face_data.csv", "general_model.pt")
+    print(p.test_acc)
 
     
 

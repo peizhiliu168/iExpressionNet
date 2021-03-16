@@ -25,7 +25,9 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
         testloader = DataLoader(test_set, batch_size=batch_size, shuffle=shuffle)
 
     if running_mode == 'train':
-        optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
+        #optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-6)
+
         train_loss = []
         train_acc = []
         valid_loss = []
@@ -47,7 +49,7 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
 
                 print("Training epoch: {}, train accuracy: {}, train loss: {}, valid accuracy: {}, valid loss: {} ".format(counter, acc, loss, valid_acc_val, valid_loss_val))
                 
-                if (prev_valid_loss_val - valid_loss_val) < stop_thr or counter >= n_epochs:
+                if abs(prev_valid_loss_val - valid_loss_val) < stop_thr or counter >= n_epochs:
                     break
                 prev_valid_loss_val = valid_loss_val
         

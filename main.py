@@ -9,7 +9,8 @@ import cv2
 
 def main():    
     p = Pipeline()
-    p.train_general_model("data/icml_face_data.csv", "general_model.pt")
+    p.train_general_model("data/icml_face_data.csv", "general_model.pt", learning_rate=1e-3, n_epochs=40, stop_thr=1e-4, use_valid=True, batch_size=128)
+    print(p.test_loss, p.test_acc)
     '''for frame in ingest_live_video():
         cropped = face_detect(frame, 'data\\haarcascade_frontalface_default.xml', grayscale=True)
         print(cropped['rectangles'])

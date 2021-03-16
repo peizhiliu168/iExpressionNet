@@ -44,17 +44,16 @@ class Emotion_Classifier_Conv(nn.Module):
         self.pool_block5 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         # fully connected layers 
-        self.fc1 = nn.Linear(512, 4096)
+        self.fc1 = nn.Linear(512, 4096)#512
         self.bn_fc1 = nn.BatchNorm1d(4096)
         self.fc2 = nn.Linear(4096, 4096)
         self.bn_fc2 = nn.BatchNorm1d(4096)
         self.fc3 = nn.Linear(4096, 7)
 
-        self.dropout = nn.Dropout(p=0.3)
+        self.dropout = nn.Dropout(p=0.7)
 
     def forward(self, x):
-        print(x.shape)
-        x = F.relu(self.bn_block1(self.conv1_block1(x)))
+        '''x = F.relu(self.bn_block1(self.conv1_block1(x)))
         x = self.pool_block1(F.relu(self.bn_block1(self.conv2_block1(x))))
 
         x = F.relu(self.bn_block2(self.conv1_block2(x)))
@@ -76,10 +75,71 @@ class Emotion_Classifier_Conv(nn.Module):
 
         x = self.dropout(F.relu(self.bn_fc1(self.fc1(x))))
         x = self.dropout(F.relu(self.bn_fc2(self.fc2(x))))
+        output = self.fc3(x) # no need to apply softmax since we're using cross-entropy loss'''
+        x = F.relu(self.conv1_block1(x))
+        x = self.pool_block1(F.relu(self.conv2_block1(x)))
+
+        x = F.relu(self.conv1_block2(x))
+        x = self.pool_block2(F.relu(self.conv2_block2(x)))
+
+        x = F.relu(self.conv1_block3(x))
+        x = F.relu(self.conv2_block3(x))
+        x = self.pool_block3(F.relu(self.conv3_block3(x)))
+
+        x = F.relu(self.conv1_block4(x))
+        x = F.relu(self.conv2_block4(x))
+        x = self.pool_block4(F.relu(self.conv3_block4(x)))
+
+        x = F.relu(self.conv1_block5(x))
+        x = F.relu(self.conv2_block5(x))
+        x = self.pool_block5(F.relu(self.conv3_block5(x)))
+
+        x = x.view(-1, 512)
+
+        x = self.dropout(F.relu(self.fc1(x)))
+        x = self.dropout(F.relu(self.fc2(x)))
         output = self.fc3(x) # no need to apply softmax since we're using cross-entropy loss
 
         return output
 
+
+# architecture from https://github.com/atulapra/Emotion-detection
+class Emotion_Detector_Conv(nn.Module):
+    def __init__(self):
+        super(Emotion_Detector_Conv, self).__init__()
+
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.dropout_conv = None
+
+        # block 1 
+        self.conv1_block1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1)
+        self.conv2_block1 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+
+        # block 2
+        self.conv1_block2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1)
+        self.conv2_block2 = nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1)
+
+        # FC layers
+        self.fc1 = nn.Linear(4608, 1024)
+        self.dropout_fc = nn.Dropout(p=0.2)
+        self.fc2 = nn.Linear(1024, 7)
+
+    def forward(self, x):
+        x = F.relu(self.conv1_block1(x))
+        x = self.pool(F.relu(self.conv2_block1(x)))
+        
+        x = self.pool(F.relu(self.conv1_block2(x)))
+        x = self.pool(F.relu(self.conv2_block2(x)))
+        
+        x = x.view(-1, 4608)
+
+        x = self.dropout_fc(F.relu(self.fc1(x)))
+        output = self.fc2(x)
+
+        return output
+
+
+    
 
 
 
