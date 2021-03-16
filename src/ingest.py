@@ -24,11 +24,11 @@ def ingest_live_video():
 # ingest FER13 data given path to data
 def ingest_fer13(path):
     def preprocessing(data):
-        image_array = np.zeros(shape=(len(data), 48, 48))
+        image_array = np.zeros(shape=(len(data), 1, 48, 48))
         image_label = np.array(list(map(int, data['emotion'])))
         for i, row in enumerate(data.index):
             image = np.fromstring(data.loc[row, ' pixels'], dtype=int, sep=' ')
-            image = np.reshape(image, (48, 48))
+            image = np.reshape(image, (1, 48, 48))
             image_array[i] = image
         return image_array, image_label
 

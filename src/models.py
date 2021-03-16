@@ -53,9 +53,10 @@ class Emotion_Classifier_Conv(nn.Module):
         self.dropout = nn.Dropout(p=0.3)
 
     def forward(self, x):
+        print(x.shape)
         x = F.relu(self.bn_block1(self.conv1_block1(x)))
         x = self.pool_block1(F.relu(self.bn_block1(self.conv2_block1(x))))
-        
+
         x = F.relu(self.bn_block2(self.conv1_block2(x)))
         x = self.pool_block2(F.relu(self.bn_block2(self.conv2_block2(x))))
 

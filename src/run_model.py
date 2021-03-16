@@ -12,102 +12,115 @@ from fer13 import FER2013
 from torch.utils.data import Dataset, DataLoader
 from torch.autograd import Variable
 
+def run_model(model, running_mode='train', train_set=None, valid_set=None, test_set=None,
+    batch_size=1, learning_rate=0.01, n_epochs=1, stop_thr=1e-4, shuffle=True, device=torch.device('cpu')):
+
+    if train_set:
+        trainloader = DataLoader(train_set, batch_size=batch_size, shuffle=shuffle)
+    if valid_set:
+        validloader = DataLoader(valid_set, batch_size=batch_size, shuffle=shuffle)
+    if test_set:
+        testloader = DataLoader(test_set, batch_size=batch_size, shuffle=shuffle)
+
+    if running_mode == 'train':
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
+        train_loss = []
+        train_acc = []
+        valid_loss = []
+        valid_acc = []
+
+        if valid_set:
+            prev_valid_loss_val = np.inf
+            counter = 0
+            while True:
+                counter +=1 
+                model, loss, acc = _train(model, trainloader, optimizer, device)
+                train_loss.append(loss)
+                train_acc.append(acc)
+
+                optimizer.zero_grad()
+                valid_loss_val, valid_acc_val = _test(model, validloader, device)
+                valid_loss.append(valid_loss_val)
+                valid_acc.append(valid_acc_val)
+
+                if (prev_valid_loss_val - valid_loss_val) < stop_thr or counter >= n_epochs:
+                    break
+                prev_valid_loss_val = valid_loss_val
+        
+        else:
+            for i in range(n_epochs):
+                model, loss, acc = _train(model, trainloader, optimizer, device)
+                train_loss.append(loss)
+                train_acc.append(acc)
+
+      
+        return model, {'train':np.array(train_loss), 'valid':np.array(valid_loss)}, {'train':np.array(train_acc), 'valid':np.array(valid_acc)}
+    
+    elif running_mode == 'test':
+        loss, accuracy = _test(model, testloader, device)
+        return loss, accuracy
 
 
-use_cuda = False#torch.cuda.is_available()
-net = Emotion_Classifier_Conv()
+def _train(model, data_loader, optimizer, device=torch.device('cpu')):
 
-criterion = nn.CrossEntropyLoss()
-lr = 0.01
-bs = 128
-optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=5e-4)
+    model.train()
+    model.to(device)
 
-# path to data file
-path = "icml_face_data.csv"
-train_data, train_labels, publicTest_data, publicTest_labels, privateTest_data, privateTest_labels = ingest_fer13(path)
+    criterion = nn.CrossEntropyLoss()
 
-# load training set
-trainset = FER2013('Training', train_data, train_labels, publicTest_data, publicTest_labels, privateTest_data, privateTest_labels)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=bs, shuffle=True, num_workers=1)
-# load public test set
-publicTestset = FER2013('PublicTest', train_data, train_labels, publicTest_data, publicTest_labels, privateTest_data, privateTest_labels)
-publicTestloader = torch.utils.data.DataLoader(publicTestset, batch_size=bs, shuffle=False, num_workers=1)
-# load private test set
-privateTestset = FER2013('PrivateTest', train_data, train_labels, publicTest_data, publicTest_labels, privateTest_data, privateTest_labels)
-privateTestloader = torch.utils.data.DataLoader(privateTestset, batch_size=bs, shuffle=False, num_workers=1)
-
-
-def train(epoch):
-
-    net.train()
     train_loss = 0
     correct = 0
     total = 0
 
-    for batch_idx, (inputs, targets) in enumerate(trainloader):
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
+    for batch_idx, (inputs, targets) in enumerate(data_loader):
+        inputs.to(device)
+        targets.to(device)
+
+        # zero out gradient
         optimizer.zero_grad()
+
+        # compute gradient and step
         inputs, targets = Variable(inputs),Variable(targets)
-        outputs = net(inputs)
-        loss = criterion(outputs, targets)
+        outputs = model(inputs.float())
+        loss = criterion(outputs, targets.long())
         loss.backward()
         optimizer.step()
-        train_loss += loss.data[0]
+
+        train_loss += loss.item()
+        _, predicted = torch.max(outputs.data, 1)
+        total += targets.size(0)
+        correct += predicted.eq(targets.data).cpu().sum()
+        print("Batch {} loss: {}, accuracy: {}".format(batch_idx, loss.item(), correct/total))
+
+    train_acc = 100. * correct / total
+    print("Training accuracy for epoch " + str(epoch) + " is " + str(train_acc))
+    return model, train_loss / len(data_loader), train_acc
+
+# interal function to test data
+def _test(model, data_loader, device=torch.device('cpu')):
+    model.eval()
+    model.to(device)
+
+    criterion = nn.CrossEntropyLoss()
+
+    train_loss = 0
+    correct = 0
+    total = 0
+
+    for batch_idx, (inputs, targets) in enumerate(data_loader):
+        inputs.to(device)
+        targets.to(device)
+
+        # compute gradient and step
+        inputs, targets = Variable(inputs),Variable(targets)
+        outputs = model(inputs.float())
+        loss = criterion(outputs, targets.long())
+
+        train_loss += loss.item()
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
 
     train_acc = 100. * correct / total
-    print("Training accuracy for epoch " + str(epoch) + " is " + str(train_acc))
-
-def publicTest(epoch):
-
-    net.eval()
-    publicTest_loss = 0
-    correct = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(publicTestloader):
-        bs, ncrops, c, h, w = np.shape(inputs)
-        inputs = inputs.view(-1, c, h, w)
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
-        outputs = net(inputs)
-        outputs_avg = outputs.view(bs, ncrops, -1).mean(1)
-        loss = criterion(outputs_avg, targets)
-        publicTest_loss += loss.data[0]
-        _, predicted = torch.max(outputs_avg.data, 1)
-        total += targets.size(0)
-        correct += predicted.eq(targets.data).cpu().sum()
-
-    publicTest_acc = 100. * correct / total
-    print("Public Test accuracy for epoch " + str(epoch) + " is " + str(publicTest_acc))
-
-def privateTest(epoch):
-
-    net.eval()
-    privateTest_loss = 0
-    correct = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(privateTestloader):
-        bs, ncrops, c, h, w = np.shape(inputs)
-        inputs = inputs.view(-1, c, h, w)
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
-        outputs = net(inputs)
-        outputs_avg = outputs.view(bs, ncrops, -1).mean(1)
-        loss = criterion(outputs_avg, targets)
-        privateTest_loss += loss.data[0]
-        _, predicted = torch.max(outputs_avg.data, 1)
-        total += targets.size(0)
-        correct += predicted.eq(targets.data).cpu().sum()
-
-    privateTest_acc = 100. * correct / total
-    print("Private Test accuracy for epoch " + str(epoch) + " is " + str(privateTest_acc))
-
-
-if __name__ == "__main__":
-    for epoch in range(50):
-        train(epoch)
-        publicTest(epoch)
-        privateTest(epoch)
+    print("Testing accuracy for epoch " + str(epoch) + " is " + str(train_acc))
+    return train_loss / len(data_loader), train_acc
