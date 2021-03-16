@@ -1,7 +1,9 @@
 import numpy as np
 import torch.utils.data as data
-from ingest import ingest_fer13
 from PIL import Image
+
+from .ingest import ingest_fer13
+
 
 class FER2013(data.Dataset):
 

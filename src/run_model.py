@@ -2,15 +2,17 @@
 # define functions here to train, test CNN models #
 ###################################################
 
-from models import Emotion_Classifier_Conv
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from ingest import ingest_fer13
-from fer13 import FER2013
 from torch.utils.data import Dataset, DataLoader
 from torch.autograd import Variable
+
+from .models import Emotion_Classifier_Conv
+from .ingest import ingest_fer13
+from .fer13 import FER2013
+
 
 def run_model(model, running_mode='train', train_set=None, valid_set=None, test_set=None,
     batch_size=1, learning_rate=0.01, n_epochs=1, stop_thr=1e-4, shuffle=True, device=torch.device('cpu')):
