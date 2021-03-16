@@ -66,7 +66,7 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
 def _train(model, data_loader, optimizer, device=torch.device('cpu')):
 
     model.train()
-    model.to(device)
+    model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
 
@@ -75,18 +75,22 @@ def _train(model, data_loader, optimizer, device=torch.device('cpu')):
     total = 0
 
     for batch_idx, (inputs, targets) in enumerate(data_loader):
-        inputs.to(device)
-        targets.to(device)
+        inputs = inputs.to(device)
+        targets = targets.to(device)
 
         # zero out gradient
         optimizer.zero_grad()
 
         # compute gradient and step
-        inputs, targets = Variable(inputs),Variable(targets)
+        print("section 1")
         outputs = model(inputs.float())
+        print("section 2")
         loss = criterion(outputs, targets.long())
+        print("section 3")
         loss.backward()
+        print("section 4")
         optimizer.step()
+        print("section 5")
 
         train_loss += loss.item()
         _, predicted = torch.max(outputs.data, 1)
@@ -101,7 +105,7 @@ def _train(model, data_loader, optimizer, device=torch.device('cpu')):
 # interal function to test data
 def _test(model, data_loader, device=torch.device('cpu')):
     model.eval()
-    model.to(device)
+    model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
 
@@ -110,8 +114,8 @@ def _test(model, data_loader, device=torch.device('cpu')):
     total = 0
 
     for batch_idx, (inputs, targets) in enumerate(data_loader):
-        inputs.to(device)
-        targets.to(device)
+        inputs = inputs.to(device)
+        inputs = targets.to(device)
 
         # compute gradient and step
         inputs, targets = Variable(inputs),Variable(targets)
