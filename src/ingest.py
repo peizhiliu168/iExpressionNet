@@ -4,6 +4,7 @@
 ##################################################
 import cv2
 import pandas as pd
+import numpy as np
 
 # ingest live webcam video ingest to produce a video stream generator
 def ingest_live_video():
@@ -34,11 +35,11 @@ def ingest_fer13(path):
 
     data = pd.read_csv(path)
 
-    train_image_array, train_image_label = preprocessing(data[data[' Usage']=='Training'])
-    val_image_array, val_image_label = preprocessing(data[data[' Usage']=='PrivateTest'])
-    test_image_array, test_image_label = preprocessing(data[data[' Usage']=='PublicTest'])
+    train_data, train_labels = preprocessing(data[data[' Usage']=='Training'])
+    publicTest_data, publicTest_labels = preprocessing(data[data[' Usage']=='PrivateTest'])
+    privateTest_data, privateTest_labels = preprocessing(data[data[' Usage']=='PublicTest'])
 
-    return train_image_array, train_image_label, val_image_array, val_image_label, test_image_array, test_image_label
+    return train_data, train_labels, publicTest_data, publicTest_labels, privateTest_data, privateTest_labels
     
 
 

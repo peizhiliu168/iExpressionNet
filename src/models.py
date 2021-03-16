@@ -8,7 +8,7 @@ import numpy as np
 
 # using VGG 16 architecture
 class Emotion_Classifier_Conv(nn.Module):
-    def __init__(self, kernel_size, stride):
+    def __init__(self):
         super(Emotion_Classifier_Conv, self).__init__()
 
         # block 1 (1x48x48) -> (64x24x24)
