@@ -39,6 +39,7 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
                 model, loss, acc = _train(model, trainloader, optimizer, device)
                 train_loss.append(loss)
                 train_acc.append(acc)
+                print("Training epoch: {}, accuracy: {}, loss: {} ".format(i, acc, loss))
 
                 optimizer.zero_grad()
                 valid_loss_val, valid_acc_val = _test(model, validloader, device)
@@ -54,8 +55,8 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
                 model, loss, acc = _train(model, trainloader, optimizer, device)
                 train_loss.append(loss)
                 train_acc.append(acc)
+                print("Training epoch: {}, accuracy: {}, loss: {} ".format(i, acc, loss))
 
-      
         return model, {'train':np.array(train_loss), 'valid':np.array(valid_loss)}, {'train':np.array(train_acc), 'valid':np.array(valid_acc)}
     
     elif running_mode == 'test':
@@ -82,15 +83,10 @@ def _train(model, data_loader, optimizer, device=torch.device('cpu')):
         optimizer.zero_grad()
 
         # compute gradient and step
-        print("section 1")
         outputs = model(inputs.float())
-        print("section 2")
         loss = criterion(outputs, targets.long())
-        print("section 3")
         loss.backward()
-        print("section 4")
         optimizer.step()
-        print("section 5")
 
         train_loss += loss.item()
         _, predicted = torch.max(outputs.data, 1)
@@ -99,7 +95,6 @@ def _train(model, data_loader, optimizer, device=torch.device('cpu')):
         print("Batch {} loss: {}, accuracy: {}".format(batch_idx, loss.item(), correct/total))
 
     train_acc = 100. * correct / total
-    print("Training accuracy for epoch " + str(epoch) + " is " + str(train_acc))
     return model, train_loss / len(data_loader), train_acc
 
 # interal function to test data
@@ -128,5 +123,4 @@ def _test(model, data_loader, device=torch.device('cpu')):
         correct += predicted.eq(targets.data).cpu().sum()
 
     train_acc = 100. * correct / total
-    print("Testing accuracy for epoch " + str(epoch) + " is " + str(train_acc))
     return train_loss / len(data_loader), train_acc
