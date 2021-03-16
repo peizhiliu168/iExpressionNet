@@ -26,6 +26,7 @@ class Emotion_Classifier_Conv(nn.Module):
         # block 3 (128x12x12) -> (256x6x6)
         self.conv1_block3 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1)
         self.conv2_block3 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1)
+        self.conv3_block3 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1)
         self.pool_block3 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.bn_block3 = nn.BatchNorm2d(256)
 
@@ -59,7 +60,8 @@ class Emotion_Classifier_Conv(nn.Module):
         x = self.pool_block2(F.relu(self.bn_block2(self.conv2_block2(x))))
 
         x = F.relu(self.bn_block3(self.conv1_block3(x)))
-        x = self.pool_block3(F.relu(self.bn_block3(self.conv2_block3(x))))
+        x = F.relu(self.bn_block3(self.conv2_block3(x)))
+        x = self.pool_block3(F.relu(self.bn_block3(self.conv3_block3(x))))
 
         x = F.relu(self.bn_block45(self.conv1_block4(x)))
         x = F.relu(self.bn_block45(self.conv2_block4(x)))
