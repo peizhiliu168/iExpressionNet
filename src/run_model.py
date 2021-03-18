@@ -11,7 +11,7 @@ from torch.autograd import Variable
 
 from .models import Emotion_Classifier_Conv
 from .ingest import ingest_fer13
-from .fer13 import FER2013
+from .dataloaders import FER2013
 
 # A general run model function. Can be used to both train the data as well 
 # perform evaluation on the model.

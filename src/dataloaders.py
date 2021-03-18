@@ -5,6 +5,44 @@ from PIL import Image
 
 from .ingest import ingest_fer13
 
+class SpecificDataset(data.Dataset):
+    
+    def __init__(self, features, labels, split='Training'):
+        self.features = features
+        self.labels = labels
+        self.split = split
+
+         # augment the training images
+        self.train_transforms = transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(30),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5), (0.5))
+        ])
+
+        # normalize the test images
+        self.test_transforms = transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5), (0.5))
+        ])
+
+    def __getitem__(self, index):
+        img, label = self.features[index], self.labels[index]
+
+        img = Image.fromarray(img.astype('uint8'))
+        if self.split == 'Training':
+            img = self.train_transforms(img)
+        else:
+            img = self.test_transforms(img)
+
+        return img, label
+
+    def __len__(self):
+        return len(self.features)
+
+
 
 class FER2013(data.Dataset):
 

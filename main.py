@@ -22,7 +22,11 @@ def main():
 
 
     p = Pipeline()
-    p.sample_specific_data(100, 'data/specific_dataset')
+    p.sample_specific_data(100, "data/specific_dataset")
+    p.load_general_model("data/general_model.pt", mode="test")
+    p.ingest_specific_data("data/specific_dataset", train_ratio=0.8)
+    p.evaluate_specific_model()
+    #p.sample_specific_data(100, 'data/specific_dataset')
 
 
 

@@ -13,11 +13,12 @@ import cv2
 
 from .models import Emotion_Classifier_Conv, Emotion_Detector_Conv
 from .run_model import run_model
-from .fer13 import FER2013
-from .ingest import ingest_live_video, ingest_fer13
+from .dataloaders import FER2013, SpecificDataset
+from .ingest import ingest_live_video, ingest_fer13, ingest_specific
 from .face_detection import face_detect
 
 class Pipeline:
+    
     def __init__ (self, face_model_path='data/haarcascade_frontalface_default.xml'):
         # determine GPU or CPU to use
         if torch.cuda.is_available():  
@@ -36,13 +37,27 @@ class Pipeline:
         # labels and indices in array map one-to-one
         self.categories = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
 
-    # train the general model on FER13 dataset
-    def train_general_model(self, fer13_path, output_path, learning_rate=0.01, batch_size=128, n_epochs=30, stop_thr=1e-4, use_valid=False):
+        return
 
+
+    def ingest_fer13_data(self, fer13_path):
         # t for train, v for validation, e for evaulation, f for features, l for labels
-        self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, _, _ = ingest_fer13(fer13_path)
-        trainset = FER2013('Training', self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, self.fer13_ef, self.fer13_el)
-        validset = FER2013('PublicTest', self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, self.fer13_ef, self.fer13_el)
+        self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, self.fer13_ef, self.fer13_el = ingest_fer13(fer13_path)
+        return
+
+    def ingest_specific_data(self, specific_path, train_ratio=0.8):
+        # t for train, v for validation, e for evaulation, f for features, l for labels
+        self.specific_tf, self.specific_tl, self.specific_vf, self.specific_vl, self.specific_ef, self.specific_el = ingest_specific(specific_path, train_ratio=train_ratio)
+        return
+
+
+    # train the general model on FER13 dataset
+    def train_general_model(self, output_path, learning_rate=0.01, batch_size=128, n_epochs=30, stop_thr=1e-4, use_valid=False):
+        self.general_model_path = output_path
+        
+        # initialize dataloader
+        trainset = FER2013('Training', self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl)
+        validset = FER2013('PublicTest', self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl)
 
         if (use_valid):
             self.model, self.general_train_info, self.general_valid_info = run_model(self.model, 
@@ -66,17 +81,65 @@ class Pipeline:
         # draw some pretty graphs
         
         # export model to output_path
-        torch.save(self.model.state_dict(), output_path)
+        torch.save(self.model.state_dict(), self.general_model_path)
+        print("Training complete!")
         return
 
 
-    def evaluate_general_model(self, fer13_path):
-        # t for train, v for validation, e for evaulation, f for features, l for labels
-        _, _, _, _, self.fer13_ef, self.fer13_el = ingest_fer13(fer13_path)
-        testset = FER2013('PrivateTest', self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, self.fer13_ef, self.fer13_el)
+    # train the general model on FER13 dataset
+    def train_specific_model(self, output_path, learning_rate=0.01, batch_size=128, n_epochs=30, stop_thr=1e-4, use_valid=False):
+        self.specific_model_path = output_path
+
+        # initialize dataloader
+        trainset = SpecificDataset(self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, split="Training")
+        validset = SpecificDataset(self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, split="Validating")
+
+        # freeze portion of the model
+
+        if (use_valid):
+            self.model, self.general_train_info, self.general_valid_info = run_model(self.model, 
+                                                                                    running_mode='train', 
+                                                                                    train_set=trainset, 
+                                                                                    valid_set=validset, 
+                                                                                    batch_size=batch_size, 
+                                                                                    learning_rate=learning_rate, 
+                                                                                    n_epochs=n_epochs, 
+                                                                                    device=self.device, 
+                                                                                    stop_thr=stop_thr)
+        else:
+            self.model, self.general_train_info, _ = run_model(self.model, 
+                                                                running_mode='train', 
+                                                                train_set=trainset, 
+                                                                batch_size=batch_size, 
+                                                                learning_rate=learning_rate, 
+                                                                n_epochs=n_epochs, 
+                                                                device=self.device)
+
+        # draw some pretty graphs
+        
+        # export model to output_path
+        torch.save(self.model.state_dict(), self.specific_model_path)
+        print("Training complete!")
+        return
+
+
+    def evaluate_general_model(self):
+        # initialize dataloader
+        testset = FER2013('PrivateTest', privateTest_data=self.fer13_ef, privateTest_labels=self.fer13_el)
 
         # get test loss and accuracy
         self.test_loss, self.test_acc = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
+        
+        # draw some pretty graphs
+        return
+
+    def evaluate_specific_model(self):
+        # initialize dataloader
+        testset = SpecificDataset(self.specific_ef, self.specific_el, split="Testing")
+
+        # get test loss and accuracy
+        test_loss, test_acc = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
+        print(test_loss, test_acc)
         
         # draw some pretty graphs
         return
@@ -85,7 +148,7 @@ class Pipeline:
     # there is a pretrained general model, we can load it into 
     # self.model by specifying a path to the .pt file
     def load_general_model(self, general_model_path, mode="train"):
-        self.model.load_state_dict(torch.load(general_model_path))
+        self.model.load_state_dict(torch.load(general_model_path, map_location=self.device))
         if mode == "train":
             self.model.train()
         else:
