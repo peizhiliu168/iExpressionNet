@@ -113,8 +113,8 @@ def _test(model, data_loader, device=torch.device('cpu')):
     correct = 0
     total = 0
 
-    predictions = torch.tensor([])
-    labels = torch.tensor([])
+    predictions = torch.tensor([]).to(device)
+    labels = torch.tensor([]).to(device)
 
     for batch_idx, (inputs, targets) in enumerate(data_loader):
         inputs = inputs.to(device)

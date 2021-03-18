@@ -17,7 +17,7 @@ def ingest_live_video():
 
     while True:
         b, img = stream.read()
-        yield img
+        yield img, stream
         
         # press "q" to stop stream
         if cv2.waitKey(1) & 0xFF == ord('q'):

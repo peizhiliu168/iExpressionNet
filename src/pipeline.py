@@ -248,7 +248,7 @@ class Pipeline:
             time.sleep(1)
 
             samples = 0
-            for frame in ingest_live_video():
+            for frame, stream in ingest_live_video():
                 rects, crops = face_detect(frame, self.face_model_path, single=True, grayscale=True)
 
                 if crops != []:
@@ -272,6 +272,9 @@ class Pipeline:
 
                 if samples >= n_samples:
                     break
+            
+            stream.release()
+            cv2.destroyAllWindows()
 
         return
 
@@ -285,7 +288,7 @@ class Pipeline:
                 transforms.Normalize((0.5), (0.5))
             ])
 
-        for frame in ingest_live_video():
+        for frame, stream in ingest_live_video():
             rects, crops = face_detect(frame, self.face_model_path, grayscale=True, throwout=3)
 
             if crops != []:
