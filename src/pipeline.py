@@ -267,7 +267,7 @@ class Pipeline:
                     cv2.imwrite(image_path, cropped)
 
                 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
-                cv2.putText(frame, 'sampling {}/{}'.format(samples, n_samples), (10, 30), font, 2, (0, 255, 0), 2, cv2.LINE_AA)
+                cv2.putText(frame, 'sampling {}/{}'.format(samples + 1, n_samples), (10, 30), font, 2, (0, 255, 0), 2, cv2.LINE_AA)
                 cv2.imshow('frame', frame)
 
                 if samples >= n_samples:

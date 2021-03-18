@@ -34,32 +34,33 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
         valid_loss = []
         valid_acc = []
 
-        if valid_set:
-            prev_valid_loss_val = np.inf
-            counter = 0
-            while True:
-                counter +=1 
-                model, loss, acc = _train(model, trainloader, optimizer, device)
-                train_loss.append(loss)
-                train_acc.append(acc)
+        if n_epochs > 0:
+            if valid_set:
+                prev_valid_loss_val = np.inf
+                counter = 0
+                while True:
+                    counter +=1 
+                    model, loss, acc = _train(model, trainloader, optimizer, device)
+                    train_loss.append(loss)
+                    train_acc.append(acc)
 
-                optimizer.zero_grad()
-                valid_loss_val, valid_acc_val, _ = _test(model, validloader, device)
-                valid_loss.append(valid_loss_val)
-                valid_acc.append(valid_acc_val)
+                    optimizer.zero_grad()
+                    valid_loss_val, valid_acc_val, _ = _test(model, validloader, device)
+                    valid_loss.append(valid_loss_val)
+                    valid_acc.append(valid_acc_val)
 
-                print("Training epoch: {}, train accuracy: {}, train loss: {}, valid accuracy: {}, valid loss: {} ".format(counter, acc, loss, valid_acc_val, valid_loss_val))
-                
-                if abs(prev_valid_loss_val - valid_loss_val) < stop_thr or counter >= n_epochs:
-                    break
-                prev_valid_loss_val = valid_loss_val
-        
-        else:
-            for i in range(n_epochs):
-                model, loss, acc = _train(model, trainloader, optimizer, device)
-                train_loss.append(loss)
-                train_acc.append(acc)
-                print("Training epoch: {}, accuracy: {}, loss: {} ".format(i, acc, loss))
+                    print("Training epoch: {}, train accuracy: {}, train loss: {}, valid accuracy: {}, valid loss: {} ".format(counter, acc, loss, valid_acc_val, valid_loss_val))
+                    
+                    if abs(prev_valid_loss_val - valid_loss_val) < stop_thr or counter >= n_epochs:
+                        break
+                    prev_valid_loss_val = valid_loss_val
+            
+            else:
+                for i in range(n_epochs):
+                    model, loss, acc = _train(model, trainloader, optimizer, device)
+                    train_loss.append(loss)
+                    train_acc.append(acc)
+                    print("Training epoch: {}, accuracy: {}, loss: {} ".format(i, acc, loss))
 
         return model, {'loss':np.array(train_loss), 'acc':np.array(train_acc)}, {'loss':np.array(valid_loss), 'acc':np.array(valid_acc)}
     
