@@ -61,7 +61,7 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
                 train_acc.append(acc)
                 print("Training epoch: {}, accuracy: {}, loss: {} ".format(i, acc, loss))
 
-        return model, {'train':np.array(train_loss), 'valid':np.array(valid_loss)}, {'train':np.array(train_acc), 'valid':np.array(valid_acc)}
+        return model, {'loss':np.array(train_loss), 'acc':np.array(train_acc)}, {'loss':np.array(valid_loss), 'acc':np.array(valid_acc)}
     
     elif running_mode == 'test':
         loss, accuracy, predictions = _test(model, testloader, device)
