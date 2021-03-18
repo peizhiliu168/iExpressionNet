@@ -74,7 +74,7 @@ def ingest_specific(path, train_ratio):
 
 
 
-ingest_specific("data/specific_dataset", 0.8)
+#ingest_specific("data/specific_dataset", 0.8)
 
     
 

@@ -22,11 +22,15 @@ def main():
 
 
     p = Pipeline()
-    p.sample_specific_data(100, "data/specific_dataset")
-    p.load_general_model("data/general_model.pt", mode="test")
+    #p.sample_specific_data(200, "data/specific_dataset")
+    p.load_model("data/general_model.pt", mode="train")
     p.ingest_specific_data("data/specific_dataset", train_ratio=0.8)
-    p.evaluate_specific_model()
+    #p.ingest_fer13_data("data/icml_face_data.csv")
+    #p.train_specific_model("data/specific_model.pt", learning_rate=1e-3, n_epochs=4, stop_thr=1e-5, use_valid=True, batch_size=32)
+    #p.evaluate_specific_model()
+    #p.evaluate_general_model()
     #p.sample_specific_data(100, 'data/specific_dataset')
+    p.run()
 
 
 

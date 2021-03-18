@@ -10,6 +10,10 @@ import torch
 import os
 import time
 import cv2
+from torchvision import transforms
+from PIL import Image
+import numpy as np
+
 
 from .models import Emotion_Classifier_Conv, Emotion_Detector_Conv
 from .run_model import run_model
@@ -35,7 +39,7 @@ class Pipeline:
 
         # a list of expression categories in the FER13 dataset. The
         # labels and indices in array map one-to-one
-        self.categories = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
+        self.classes = np.array(['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral'])
 
         return
 
@@ -91,10 +95,24 @@ class Pipeline:
         self.specific_model_path = output_path
 
         # initialize dataloader
-        trainset = SpecificDataset(self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, split="Training")
-        validset = SpecificDataset(self.fer13_tf, self.fer13_tl, self.fer13_vf, self.fer13_vl, split="Validating")
+        trainset = SpecificDataset(self.specific_tf, self.specific_tl, split="Training")
+        validset = SpecificDataset(self.specific_vf, self.specific_vl, split="Validating")
 
         # freeze portion of the model
+        self.model.conv1_block1.weight.requires_grad = False
+        self.model.conv1_block1.bias.requires_grad = False
+        self.model.conv2_block1.weight.requires_grad = False
+        self.model.conv2_block1.bias.requires_grad = False
+        
+        self.model.conv1_block2.weight.requires_grad = False
+        self.model.conv1_block2.bias.requires_grad = False
+        self.model.conv2_block2.weight.requires_grad = False
+        self.model.conv2_block2.bias.requires_grad = False
+
+        #self.model.fc1.weight.requires_grad = False
+        #self.model.fc1.bias.requires_grad = False
+        #self.model.fc2.weight.requires_grad = False
+        #self.model.fc2.bias.requires_grad = False
 
         if (use_valid):
             self.model, self.general_train_info, self.general_valid_info = run_model(self.model, 
@@ -128,8 +146,9 @@ class Pipeline:
         testset = FER2013('PrivateTest', privateTest_data=self.fer13_ef, privateTest_labels=self.fer13_el)
 
         # get test loss and accuracy
-        self.test_loss, self.test_acc = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
-        
+        test_loss, test_acc = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
+        print(test_loss, test_acc)
+
         # draw some pretty graphs
         return
 
@@ -145,10 +164,10 @@ class Pipeline:
         return
 
 
-    # there is a pretrained general model, we can load it into 
+    # there is a pretrained model, we can load it into 
     # self.model by specifying a path to the .pt file
-    def load_general_model(self, general_model_path, mode="train"):
-        self.model.load_state_dict(torch.load(general_model_path, map_location=self.device))
+    def load_model(self, model_path, mode="train"):
+        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
         if mode == "train":
             self.model.train()
         else:
@@ -162,7 +181,7 @@ class Pipeline:
         if not os.path.exists(path):
             os.makedirs(path)
 
-        for i, emotion in enumerate(self.categories):
+        for i, emotion in enumerate(self.classes):
             print("Please make and hold a/an {} expression.".format(emotion))
             time.sleep(3)
             print("Start sampling in 3")
@@ -172,15 +191,17 @@ class Pipeline:
             print("Start sampling in 1")
             time.sleep(1)
 
-            for samples, frame in enumerate(ingest_live_video()):
+            samples = 0
+            for frame in ingest_live_video():
                 rects, crops = face_detect(frame, self.face_model_path, single=True, grayscale=True)
 
                 if crops != []:
+                    samples += 1
+
                     cropped = crops[0]
                     cv2.imshow('cropped', cropped)
                     rectangle = rects[0]
                     cv2.rectangle(frame, (rectangle[0],rectangle[1]), (rectangle[0]+rectangle[2],rectangle[1]+rectangle[3]), (0,255,0), 2)
-                    font = cv2.FONT_HERSHEY_COMPLEX_SMALL
                     
                     # resize the image to be 48x48, the same as the fer13 dataset
                     cropped = cv2.resize(cropped, (48, 48))
@@ -189,7 +210,7 @@ class Pipeline:
                     image_path = os.path.join(self.specific_data_path, "{}_sample={}_class={}.jpg".format(prefix, samples, i))
                     cv2.imwrite(image_path, cropped)
 
-
+                font = cv2.FONT_HERSHEY_COMPLEX_SMALL
                 cv2.putText(frame, 'sampling {}/{}'.format(samples, n_samples), (10, 30), font, 2, (0, 255, 0), 2, cv2.LINE_AA)
                 cv2.imshow('frame', frame)
 
@@ -197,6 +218,49 @@ class Pipeline:
                     break
 
         return
+
+    # run the model with live camera feed
+    def run(self):
+        self.model.eval()
+
+        tfms = transforms.Compose([
+                transforms.Grayscale(num_output_channels=1),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5), (0.5))
+            ])
+
+        for frame in ingest_live_video():
+            rects, crops = face_detect(frame, self.face_model_path, grayscale=True, throwout=3)
+
+            if crops != []:
+                cropped_list = []
+                for rectangle, cropped in zip(rects, crops):
+                    cv2.rectangle(frame, (rectangle[0], rectangle[1]), (rectangle[0]+rectangle[2], rectangle[1]+rectangle[3]), (0,255,0), 2)
+
+                    # resize the image to be 48x48, the same as the fer13 dataset
+                    cropped = cv2.resize(cropped, (48, 48))
+
+                    # transform the cropped image
+                    cropped = Image.fromarray(cropped.astype('uint8'))
+                    crop_transformed = tfms(cropped)
+
+                    cropped_list.append(crop_transformed)
+
+                # feed the image into the model to get predictions
+                output = self.model(torch.stack(cropped_list))
+                _, predicted = torch.max(output.data, 1)
+
+                font = cv2.FONT_HERSHEY_COMPLEX_SMALL
+                for p, pred in enumerate(predicted):
+                    class_name = self.classes[pred]
+                    cv2.putText(frame, '{}'.format(class_name), (rects[p][0], rects[p][1]), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
+            
+            cv2.imshow('frame', frame)
+
+
+
+            
+
 
 
 

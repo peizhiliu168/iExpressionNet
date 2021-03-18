@@ -7,7 +7,7 @@ import numpy as np
 
 # given an image, crop the face from the image. Since there can be
 # multiple faces in an image, this function will return dictionaries
-# in the format: {'rectangles':[(x,y,w,y),...], 'faces':[cropped faces,...]}
+# in the format: {'rectangles':[[x,y,w,y],...], 'faces':[cropped faces,...]}
 def face_detect(image, model_path, throwout=5, grayscale=False, single=False, **kwargs):
     model = cv2.CascadeClassifier(model_path)
 
