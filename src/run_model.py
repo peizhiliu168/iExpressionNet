@@ -44,7 +44,7 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
                 train_acc.append(acc)
 
                 optimizer.zero_grad()
-                valid_loss_val, valid_acc_val = _test(model, validloader, device)
+                valid_loss_val, valid_acc_val, _ = _test(model, validloader, device)
                 valid_loss.append(valid_loss_val)
                 valid_acc.append(valid_acc_val)
 
@@ -64,8 +64,8 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
         return model, {'train':np.array(train_loss), 'valid':np.array(valid_loss)}, {'train':np.array(train_acc), 'valid':np.array(valid_acc)}
     
     elif running_mode == 'test':
-        loss, accuracy = _test(model, testloader, device)
-        return loss, accuracy
+        loss, accuracy, predictions = _test(model, testloader, device)
+        return loss, accuracy, predictions
 
 # private method called by run_model to train the model
 def _train(model, data_loader, optimizer, device=torch.device('cpu')):
@@ -112,6 +112,9 @@ def _test(model, data_loader, device=torch.device('cpu')):
     correct = 0
     total = 0
 
+    predictions = torch.tensor([])
+    labels = torch.tensor([])
+
     for batch_idx, (inputs, targets) in enumerate(data_loader):
         inputs = inputs.to(device)
         targets = targets.to(device)
@@ -126,5 +129,8 @@ def _test(model, data_loader, device=torch.device('cpu')):
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
 
+        predictions = torch.cat((predictions, predicted), 0)
+        labels = torch.cat((labels, targets), 0)
+
     train_acc = 100. * correct / total
-    return train_loss / len(data_loader), train_acc
+    return train_loss / len(data_loader), train_acc, [labels.cpu().numpy(), predictions.cpu().numpy()]

@@ -13,6 +13,7 @@ import cv2
 from torchvision import transforms
 from PIL import Image
 import numpy as np
+from sklearn.metrics import confusion_matrix, f1_score
 
 
 from .models import Emotion_Classifier_Conv, Emotion_Detector_Conv
@@ -86,7 +87,7 @@ class Pipeline:
         
         # export model to output_path
         torch.save(self.model.state_dict(), self.general_model_path)
-        print("Training complete!")
+        print("General training complete!")
         return
 
 
@@ -137,7 +138,7 @@ class Pipeline:
         
         # export model to output_path
         torch.save(self.model.state_dict(), self.specific_model_path)
-        print("Training complete!")
+        print("Specific training complete!")
         return
 
 
@@ -146,22 +147,42 @@ class Pipeline:
         testset = FER2013('PrivateTest', privateTest_data=self.fer13_ef, privateTest_labels=self.fer13_el)
 
         # get test loss and accuracy
-        test_loss, test_acc = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
-        print(test_loss, test_acc)
+        test_loss, test_acc, pred = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
+        print("test loss: {}, test accuracy: {}".format(test_loss, test_acc.item()))
+
+        # calculate confusion matrix
+        cm = confusion_matrix(pred[0], pred[1])
+        print("Confusion matrix:")
+        print(cm)
+
+        # calculate f1 score
+        f1 = f1_score(pred[0], pred[1], average=None)
+        print("F1-score: {}".format(f1))
 
         # draw some pretty graphs
-        return
+
+        return test_loss, test_acc, cm, f1
 
     def evaluate_specific_model(self):
         # initialize dataloader
         testset = SpecificDataset(self.specific_ef, self.specific_el, split="Testing")
 
         # get test loss and accuracy
-        test_loss, test_acc = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
-        print(test_loss, test_acc)
+        test_loss, test_acc, pred = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
+        print("test loss: {}, test accuracy: {}".format(test_loss, test_acc.item()))
         
+        # calculate confusion matrix
+        cm = confusion_matrix(pred[0], pred[1])
+        print("Confusion matrix:")
+        print(cm)
+
+        # calculate f1 score
+        f1 = f1_score(pred[0], pred[1], average=None)
+        print("F1-score: {}".format(f1))
+
         # draw some pretty graphs
-        return
+
+        return test_loss, test_acc, cm, f1
 
 
     # there is a pretrained model, we can load it into 
