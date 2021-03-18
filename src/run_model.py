@@ -13,7 +13,8 @@ from .models import Emotion_Classifier_Conv
 from .ingest import ingest_fer13
 from .fer13 import FER2013
 
-
+# A general run model function. Can be used to both train the data as well 
+# perform evaluation on the model.
 def run_model(model, running_mode='train', train_set=None, valid_set=None, test_set=None,
     batch_size=1, learning_rate=0.01, n_epochs=1, stop_thr=1e-4, shuffle=True, device=torch.device('cpu')):
 
@@ -66,7 +67,7 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
         loss, accuracy = _test(model, testloader, device)
         return loss, accuracy
 
-
+# private method called by run_model to train the model
 def _train(model, data_loader, optimizer, device=torch.device('cpu')):
 
     model.train()
@@ -100,7 +101,7 @@ def _train(model, data_loader, optimizer, device=torch.device('cpu')):
     train_acc = 100. * correct / total
     return model, train_loss / len(data_loader), train_acc
 
-# interal function to test data
+# private method called by run_model to validate and test the model
 def _test(model, data_loader, device=torch.device('cpu')):
     model.eval()
     model = model.to(device)

@@ -19,6 +19,7 @@ class FER2013(data.Dataset):
         self.privateTest_data = privateTest_data
         self.privateTest_labels = privateTest_labels
 
+        # augment the training images
         self.train_transforms = transforms.Compose([
             transforms.Grayscale(num_output_channels=1),
             transforms.RandomHorizontalFlip(),
@@ -26,6 +27,8 @@ class FER2013(data.Dataset):
             transforms.ToTensor(),
             transforms.Normalize((0.5), (0.5))
         ])
+
+        # normalize the test images
         self.test_transforms = transforms.Compose([
             transforms.Grayscale(num_output_channels=1),
             transforms.ToTensor(),
