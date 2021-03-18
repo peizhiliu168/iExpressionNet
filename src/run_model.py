@@ -27,7 +27,7 @@ def run_model(model, running_mode='train', train_set=None, valid_set=None, test_
 
     if running_mode == 'train':
         #optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-6)
+        optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate, weight_decay=1e-6)
 
         train_loss = []
         train_acc = []

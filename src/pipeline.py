@@ -87,18 +87,20 @@ class Pipeline:
         # draw some pretty graphs
         plt.subplot(1,2,1)
         # loss
-        plt.plot(np.arange(n_epochs), self.general_train_info.get("loss"), label='training')
-        if use_valid: plt.plot(np.arange(n_epochs), self.general_valid_info.get("loss"), label='validation')
+        plt.plot(np.arange(len(self.general_train_info.get("loss"))), self.general_train_info.get("loss"), label='training')
+        if use_valid: plt.plot(np.arange(len(self.general_valid_info.get("loss"))), self.general_valid_info.get("loss"), label='validation')
         plt.xlabel('epoch')
         plt.ylabel('loss')
+        plt.legend()
         plt.title('Loss vs epoch')
 
         plt.subplot(1,2,2)
         # accuracy
-        plt.plot(np.arange(n_epochs), self.general_train_info.get("acc"), label='training')
-        if use_valid: plt.plot(np.arange(n_epochs), self.general_valid_info.get("acc"), label='validation')
+        plt.plot(np.arange(len(self.general_train_info.get("acc"))), self.general_train_info.get("acc"), label='training')
+        if use_valid: plt.plot(np.arange(len(self.general_valid_info.get("acc"))), self.general_valid_info.get("acc"), label='validation')
         plt.xlabel('epoch')
         plt.ylabel('accuracy')
+        plt.legend()
         plt.title('Accuracy vs epoch')
 
         plt.show()
@@ -134,7 +136,7 @@ class Pipeline:
         #self.model.fc2.bias.requires_grad = False
 
         if (use_valid):
-            self.model, self.general_train_info, self.general_valid_info = run_model(self.model, 
+            self.model, self.specific_train_info, self.specific_valid_info = run_model(self.model, 
                                                                                     running_mode='train', 
                                                                                     train_set=trainset, 
                                                                                     valid_set=validset, 
@@ -144,7 +146,7 @@ class Pipeline:
                                                                                     device=self.device, 
                                                                                     stop_thr=stop_thr)
         else:
-            self.model, self.general_train_info, _ = run_model(self.model, 
+            self.model, self.specific_train_info, _ = run_model(self.model, 
                                                                 running_mode='train', 
                                                                 train_set=trainset, 
                                                                 batch_size=batch_size, 
@@ -152,21 +154,35 @@ class Pipeline:
                                                                 n_epochs=n_epochs, 
                                                                 device=self.device)
 
+
+        # unfreeze the model
+        self.model.conv1_block1.weight.requires_grad = True
+        self.model.conv1_block1.bias.requires_grad = True
+        self.model.conv2_block1.weight.requires_grad = True
+        self.model.conv2_block1.bias.requires_grad = True
+        
+        self.model.conv1_block2.weight.requires_grad = True
+        self.model.conv1_block2.bias.requires_grad = True
+        self.model.conv2_block2.weight.requires_grad = True
+        self.model.conv2_block2.bias.requires_grad = True
+
         # draw some pretty graphs
         plt.subplot(1,2,1)
         # loss
-        plt.plot(np.arange(n_epochs), self.general_train_info.get("loss"), label='training')
-        if use_valid: plt.plot(np.arange(n_epochs), self.general_valid_info.get("loss"), label='validation')
+        plt.plot(np.arange(len(self.specific_train_info.get("loss"))), self.specific_train_info.get("loss"), label='training')
+        if use_valid: plt.plot(np.arange(len(self.specific_valid_info.get("loss"))), self.specific_valid_info.get("loss"), label='validation')
         plt.xlabel('epoch')
         plt.ylabel('loss')
+        plt.legend()
         plt.title('Loss vs epoch')
 
         plt.subplot(1,2,2)
         # accuracy
-        plt.plot(np.arange(n_epochs), self.general_train_info.get("acc"), label='training')
-        if use_valid: plt.plot(np.arange(n_epochs), self.general_valid_info.get("acc"), label='validation')
+        plt.plot(np.arange(len(self.specific_train_info.get("acc"))), self.specific_train_info.get("acc"), label='training')
+        if use_valid: plt.plot(np.arange(len(self.specific_valid_info.get("acc"))), self.specific_valid_info.get("acc"), label='validation')
         plt.xlabel('epoch')
         plt.ylabel('accuracy')
+        plt.legend()
         plt.title('Accuracy vs epoch')
 
         plt.show()
@@ -306,11 +322,11 @@ class Pipeline:
                     cropped_list.append(crop_transformed)
 
                 # feed the image into the model to get predictions
-                output = self.model(torch.stack(cropped_list))
+                output = self.model(torch.stack(cropped_list).to(self.device))
                 _, predicted = torch.max(output.data, 1)
 
                 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
-                for p, pred in enumerate(predicted):
+                for p, pred in enumerate(predicted.cpu()):
                     class_name = self.classes[pred]
                     cv2.putText(frame, '{}'.format(class_name), (rects[p][0], rects[p][1]), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
             
