@@ -14,6 +14,7 @@ from torchvision import transforms
 from PIL import Image
 import numpy as np
 from sklearn.metrics import confusion_matrix, f1_score
+import matplotlib.pyplot as plt
 
 
 from .models import Emotion_Classifier_Conv, Emotion_Detector_Conv
@@ -84,6 +85,23 @@ class Pipeline:
                                                                 device=self.device)
 
         # draw some pretty graphs
+        plt.subplot(1,2,1)
+        # loss
+        plt.plot(np.arange(n_epochs), self.general_train_info.get("loss"), label='training')
+        if use_valid: plt.plot(np.arange(n_epochs), self.general_valid_info.get("loss"), label='validation')
+        plt.xlabel('epoch')
+        plt.ylabel('loss')
+        plt.title('Loss vs epoch')
+
+        plt.subplot(1,2,2)
+        # accuracy
+        plt.plot(np.arange(n_epochs), self.general_train_info.get("acc"), label='training')
+        if use_valid: plt.plot(np.arange(n_epochs), self.general_valid_info.get("acc"), label='validation')
+        plt.xlabel('epoch')
+        plt.ylabel('accuracy')
+        plt.title('Accuracy vs epoch')
+
+        plt.show()
         
         # export model to output_path
         torch.save(self.model.state_dict(), self.general_model_path)
@@ -135,6 +153,23 @@ class Pipeline:
                                                                 device=self.device)
 
         # draw some pretty graphs
+        plt.subplot(1,2,1)
+        # loss
+        plt.plot(np.arange(n_epochs), self.general_train_info.get("loss"), label='training')
+        if use_valid: plt.plot(np.arange(n_epochs), self.general_valid_info.get("loss"), label='validation')
+        plt.xlabel('epoch')
+        plt.ylabel('loss')
+        plt.title('Loss vs epoch')
+
+        plt.subplot(1,2,2)
+        # accuracy
+        plt.plot(np.arange(n_epochs), self.general_train_info.get("acc"), label='training')
+        if use_valid: plt.plot(np.arange(n_epochs), self.general_valid_info.get("acc"), label='validation')
+        plt.xlabel('epoch')
+        plt.ylabel('accuracy')
+        plt.title('Accuracy vs epoch')
+
+        plt.show()
         
         # export model to output_path
         torch.save(self.model.state_dict(), self.specific_model_path)
