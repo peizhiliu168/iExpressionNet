@@ -1,3 +1,5 @@
+## NOTE: requirements.txt does not contain pytorch installation, you will need to install pytorch separately
+
 # iExpressionNet
 ## Introduction 
 The proposed project will focus on utilizing deep learning to detect facial expressions in humans. While there have been many projects in the past that dealt with expression classification: (https://github.com/atulapra/Emotion-detection) and (https://tinyurl.com/1m4km78w), one motif we noticed throughout examining these projects is that the training accuracy on the expression classifier is often much higher than the validation accuracy. In other words, it may be the case that these models have a hard time generalizing expressions among different faces. This is perhaps due to the large variety of different faces present in the dataset.

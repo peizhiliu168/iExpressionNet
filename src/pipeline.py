@@ -13,7 +13,7 @@ import cv2
 from torchvision import transforms
 from PIL import Image
 import numpy as np
-from sklearn.metrics import confusion_matrix, f1_score
+from sklearn.metrics import confusion_matrix, f1_score, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 
 
@@ -201,16 +201,18 @@ class Pipeline:
         test_loss, test_acc, pred = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
         print("test loss: {}, test accuracy: {}".format(test_loss, test_acc.item()))
 
-        # calculate confusion matrix
-        cm = confusion_matrix(pred[0], pred[1])
-        print("Confusion matrix:")
-        print(cm)
-
         # calculate f1 score
         f1 = f1_score(pred[0], pred[1], average=None)
         print("F1-score: {}".format(f1))
 
         # draw some pretty graphs
+        # calculate confusion matrix
+        cm = confusion_matrix(pred[0], pred[1])
+        cm_normalized = confusion_matrix(pred[0], pred[1], normalize='true')
+        disp1 = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=self.classes)
+        disp2 = ConfusionMatrixDisplay(confusion_matrix=cm_normalized, display_labels=self.classes)
+        disp1.plot()
+        disp2.plot()
 
         return test_loss, test_acc, cm, f1
 
@@ -221,17 +223,19 @@ class Pipeline:
         # get test loss and accuracy
         test_loss, test_acc, pred = run_model(self.model, running_mode='test', test_set=testset, device=self.device)
         print("test loss: {}, test accuracy: {}".format(test_loss, test_acc.item()))
-        
-        # calculate confusion matrix
-        cm = confusion_matrix(pred[0], pred[1])
-        print("Confusion matrix:")
-        print(cm)
 
         # calculate f1 score
         f1 = f1_score(pred[0], pred[1], average=None)
         print("F1-score: {}".format(f1))
 
         # draw some pretty graphs
+        # calculate confusion matrix
+        cm = confusion_matrix(pred[0], pred[1])
+        cm_normalized = confusion_matrix(pred[0], pred[1], normalize='true')
+        disp1 = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=self.classes)
+        disp2 = ConfusionMatrixDisplay(confusion_matrix=cm_normalized, display_labels=self.classes)
+        disp1.plot()
+        disp2.plot()
 
         return test_loss, test_acc, cm, f1
 
