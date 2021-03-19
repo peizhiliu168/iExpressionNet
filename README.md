@@ -15,3 +15,4 @@ The general dataset we are using is FER-13 with 7 classes (0=Angry, 1=Disgust, 2
 ## References
 - https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data
 - https://github.com/atulapra/Emotion-detection
+- Our video demo at https://www.youtube.com/watch?v=9ApwyVobA5A
